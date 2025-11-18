@@ -10,7 +10,9 @@
     "test:watch": "vitest",
     "start": "node dist/index.js",
     "ci": "npm run lint && npm run test && npm run build",
-    "package": "npm run build && npm pack --pack-destination dist"
+    "package": "npm run build && npm pack --pack-destination dist",
+    "render:page": "node dist/scripts/render-static.js",
+    "build:page": "npm run build && npm run render:page"
   },
   "keywords": [
     "ci",

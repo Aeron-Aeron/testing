@@ -23,6 +23,9 @@ npm test
 npm run build
 npm start
 # open http://localhost:4173 or add ?name=YourName to customize the greeting
+# Generate static HTML (for GitHub Pages or manual hosting)
+npm run build:page
+# open static-site/index.html directly in a browser
 ```
 
 The server renders a lightweight HTML dashboard (`renderPipelinePage`) that summarizes every CI/CD stage. It is the same markup captured as an artifact inside GitHub Actions, so stakeholders can see what changed without running the code locally.
@@ -36,13 +39,26 @@ The server renders a lightweight HTML dashboard (`renderPipelinePage`) that summ
 ## CI/CD pipeline
 Workflow summary from `.github/workflows/ci.yml`:
 1. Trigger: push or pull request targeting `main`/`master`.
-2. Checkout + dependency cache via `actions/setup-node` with npm caching.
+2. Checkout + Pages configuration + dependency cache via `actions/setup-node`.
 3. `npm ci` followed by `npm run ci` to lint, test, and type-check.
-4. Upload `dist/` as `build-dist` for debugging or deployment promotion.
-5. On main/master, run `npm run package` and upload the `.tgz` bundle.
-6. If `NPM_TOKEN` is configured, publish the package straight from CI (guarded by the branch + token check).
+4. `npm run render:page` generates `static-site/index.html`, which is uploaded with `actions/upload-pages-artifact` for GitHub Pages deployment.
+5. Upload `dist/` as `build-dist` for debugging or deployment promotion.
+6. On main/master, run `npm run package` and upload the `.tgz` bundle.
+7. If `NPM_TOKEN` is configured, publish the package straight from CI (guarded by the branch + token check).
 
 Secrets (optional): set `NPM_TOKEN` to enable the final `npm publish` step. Without it, the workflow still produces artifacts for manual download.
+
+## Hosting on GitHub Pages
+This repo is ready for Pages hosting via the updated workflow:
+1. In the GitHub repository, go to **Settings → Pages** and choose **GitHub Actions** as the source (one-time setup).
+2. Push to `main`/`master` (or open a PR). The `build-test-package` job generates `static-site/index.html` and uploads it as a Pages artifact.
+3. The `deploy-pages` job (using `actions/deploy-pages@v4`) publishes that artifact to GitHub Pages. The workflow output (`Deploy to GitHub Pages` step) includes the live URL.
+
+### Customizing the static output
+Set these environment variables (locally or in the workflow) before running `npm run render:page`:
+- `PIPELINE_VISITOR` – name used in the greeting.
+- `GITHUB_REPOSITORY`, `GITHUB_WORKFLOW`, `PORT` – override the labels shown on the cards.
+- `STATIC_DIR` – pick a different output directory if needed.
 
 Add a status badge once the workflow lands:
 `![CI](https://github.com/Aeron-Aeron/testing/actions/workflows/ci.yml/badge.svg)`
